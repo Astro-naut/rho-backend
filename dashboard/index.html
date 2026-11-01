@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rho — Reactivation overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f5f7fb;
+  --bg-elev: #ffffff;
+  --bg-soft: #eef2f8;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --accent: #0f766e;
+  --accent-soft: rgba(15,118,110,.12);
+  --indigo: #4f46e5;
+  --indigo-soft: rgba(79,70,229,.12);
+  --danger: #e11d48;
+  --warn: #d97706;
+  --ok: #059669;
+  --shadow: 0 8px 28px rgba(15,23,42,.06);
+  --radius: 18px;
+  --font: "Inter", system-ui, -apple-system, sans-serif;
+}
+html[data-theme="dark"] {
+  --bg: #0b1220;
+  --bg-elev: #121a2b;
+  --bg-soft: #1a2438;
+  --text: #e8eef9;
+  --muted: #94a3b8;
+  --border: #243049;
+  --accent-soft: rgba(45,212,191,.12);
+  --indigo-soft: rgba(129,140,248,.14);
+  --shadow: 0 12px 36px rgba(0,0,0,.35);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  background:
+    radial-gradient(900px 420px at 0% -10%, rgba(15,118,110,.10), transparent 55%),
+    radial-gradient(700px 380px at 100% 0%, rgba(79,70,229,.10), transparent 50%),
+    var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.45;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 56px; }
+header.app {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  flex-wrap: wrap; margin-bottom: 18px;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo {
+  width: 42px; height: 42px; border-radius: 14px;
+  background: linear-gradient(135deg, #0f766e, #4f46e5);
+  color: #fff; font-weight: 800; display: grid; place-items: center;
+  box-shadow: var(--shadow); font-size: 1.15rem;
+}
+.brand h1 { margin: 0; font-size: 1.2rem; letter-spacing: -.02em; }
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: .84rem; }
+.actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.seg {
+  display: inline-flex; background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 999px; padding: 3px; box-shadow: var(--shadow);
+}
+.seg button {
+  border: 0; background: transparent; color: var(--muted); border-radius: 999px;
+  padding: 7px 12px; font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer;
+}
+.seg button.active { background: var(--accent); color: #fff; }
+button.ghost, button.icon {
+  appearance: none; border: 1px solid var(--border); background: var(--bg-elev);
+  color: var(--text); border-radius: 999px; padding: 8px 14px; font: inherit;
+  font-size: .84rem; font-weight: 600; cursor: pointer;
+}
+button.primary {
+  appearance: none; border: 0; border-radius: 999px; padding: 8px 14px; font: inherit;
+  font-weight: 600; cursor: pointer; color: #fff;
+  background: linear-gradient(135deg, #0f766e, #0d9488);
+}
+.hero {
+  display: grid; gap: 12px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+@media (max-width: 1100px) { .hero { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 620px) { .hero { grid-template-columns: repeat(2, 1fr); } }
+.kpi {
+  background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px 15px; box-shadow: var(--shadow); min-height: 108px;
+}
+.kpi .label { color: var(--muted); font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.kpi .value { font-size: 1.55rem; font-weight: 800; letter-spacing: -.03em; margin-top: 6px; }
+.kpi .sub { color: var(--muted); font-size: .75rem; margin-top: 6px; line-height: 1.35; }
+.kpi .delta { font-weight: 600; }
+.kpi .delta.up { color: var(--ok); }
+.kpi .delta.down { color: var(--danger); }
+.kpi.accent { background: linear-gradient(180deg, var(--accent-soft), var(--bg-elev)); }
+.layout { display: grid; gap: 14px; grid-template-columns: 1.25fr 1fr; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+.span-2 { grid-column: 1 / -1; }
+.card {
+  background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 18px; box-shadow: var(--shadow);
+}
+.card h2 { margin: 0 0 2px; font-size: 1.02rem; letter-spacing: -.01em; }
+.card .sub { color: var(--muted); font-size: .82rem; margin: 0 0 14px; }
+.flow {
+  display: grid; gap: 10px;
+}
+.flow-row {
+  display: grid; grid-template-columns: 120px 1fr 70px; gap: 10px; align-items: center;
+}
+@media (max-width: 560px) {
+  .flow-row { grid-template-columns: 1fr; gap: 4px; }
+}
+.flow-label { font-size: .86rem; font-weight: 600; }
+.flow-bar-wrap {
+  height: 28px; background: var(--bg-soft); border-radius: 999px; overflow: hidden;
+  display: flex; border: 1px solid var(--border);
+}
+.flow-seg {
+  height: 100%; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: .68rem; font-weight: 700; min-width: 0;
+  white-space: nowrap; overflow: hidden;
+}
+.flow-seg.call { background: #0f766e; }
+.flow-seg.msg { background: #4f46e5; }
+.flow-seg.skip { background: #94a3b8; }
+.flow-seg.pick { background: #0891b2; }
+.flow-seg.nopick { background: #cbd5e1; color: #334155; }
+.flow-seg.win { background: #059669; }
+.flow-seg.lose { background: #fb7185; }
+html[data-theme="dark"] .flow-seg.nopick { color: #0f172a; }
+.flow-num { text-align: right; font-weight: 700; font-size: .9rem; }
+.flow-note { color: var(--muted); font-size: .78rem; margin-top: 8px; }
+table.stages { width: 100%; border-collapse: collapse; font-size: .86rem; }
+table.stages th, table.stages td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+table.stages th { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+table.stages tr.worst { background: rgba(225,29,72,.06); }
+table.stages tr.worst td:first-child { font-weight: 700; }
+.mini-bar {
+  height: 8px; background: var(--bg-soft); border-radius: 999px; overflow: hidden; min-width: 64px;
+}
+.mini-bar > i { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+.badge {
+  display: inline-block; font-size: .68rem; font-weight: 700; padding: 2px 8px;
+  border-radius: 999px; background: rgba(225,29,72,.12); color: var(--danger);
+}
+.reason-row { margin-bottom: 12px; }
+.reason-top { display: flex; justify-content: space-between; gap: 8px; font-size: .86rem; font-weight: 600; }
+.reason-bar { height: 10px; background: var(--bg-soft); border-radius: 999px; overflow: hidden; margin: 6px 0; }
+.reason-bar > i { display: block; height: 100%; background: linear-gradient(90deg, #4f46e5, #0f766e); border-radius: 999px; }
+.insight { color: var(--muted); font-size: .78rem; margin: 0; }
+.pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.pill {
+  background: var(--bg-soft); border: 1px solid var(--border); border-radius: 999px;
+  padding: 6px 10px; font-size: .78rem; font-weight: 600;
+}
+.cost-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media (max-width: 560px) { .cost-grid { grid-template-columns: 1fr; } }
+.cost-stat {
+  background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px; padding: 12px;
+}
+.cost-stat .k { color: var(--muted); font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.cost-stat .v { font-size: 1.2rem; font-weight: 800; margin-top: 4px; }
+.progress {
+  height: 12px; background: var(--bg-soft); border: 1px solid var(--border);
+  border-radius: 999px; overflow: hidden; margin-top: 8px;
+}
+.progress > i { display: block; height: 100%; background: linear-gradient(90deg, #0f766e, #4f46e5); }
+.drop-list { display: grid; gap: 8px; }
+.drop-item {
+  display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center;
+  padding: 10px 12px; border-radius: 12px; background: var(--bg-soft); border: 1px solid var(--border);
+  font-size: .86rem;
+}
+.drop-item .pct { color: var(--muted); font-weight: 600; }
+details.advanced {
+  border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-elev);
+  box-shadow: var(--shadow); padding: 0; margin-top: 14px;
+}
+details.advanced > summary {
+  list-style: none; cursor: pointer; padding: 16px 18px; font-weight: 700; font-size: .98rem;
+  display: flex; justify-content: space-between; align-items: center;
+}
+details.advanced > summary::-webkit-details-marker { display: none; }
+details.advanced > summary::after { content: "Show"; color: var(--muted); font-size: .8rem; font-weight: 600; }
+details.advanced[open] > summary::after { content: "Hide"; }
+.adv-body { padding: 0 18px 18px; border-top: 1px solid var(--border); }
+.slider-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 12px 0; }
+input[type=range] { flex: 1; min-width: 160px; accent-color: var(--accent); }
+.sim-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+@media (max-width: 560px) { .sim-stats { grid-template-columns: 1fr; } }
+.sim-stat { background: var(--bg-soft); border-radius: 12px; padding: 10px 12px; border: 1px solid var(--border); }
+.sim-stat b { display: block; font-size: 1.1rem; margin-top: 2px; }
+.chart-box { position: relative; height: 220px; margin-top: 8px; }
+table.log { width: 100%; border-collapse: collapse; font-size: .82rem; }
+table.log th, table.log td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+table.log th { color: var(--muted); font-size: .7rem; text-transform: uppercase; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: .7rem; font-weight: 700; background: var(--bg-soft); }
+.tag.call { background: var(--accent-soft); color: var(--accent); }
+.tag.none { color: var(--muted); }
+.tag.message { background: var(--indigo-soft); color: var(--indigo); }
+.pager { display: flex; gap: 8px; justify-content: flex-end; align-items: center; margin-top: 10px; }
+.toast {
+  position: fixed; bottom: 18px; right: 18px; background: var(--text); color: var(--bg);
+  padding: 10px 14px; border-radius: 10px; opacity: 0; transform: translateY(8px); transition: .2s;
+  pointer-events: none; z-index: 20; font-size: .85rem; font-weight: 600;
+}
+.toast.show { opacity: 1; transform: none; }
+footer.note { margin-top: 20px; color: var(--muted); font-size: .75rem; text-align: center; }
+.muted { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app">
+    <div class="brand">
+      <div class="logo">ρ</div>
+      <div>
+        <h1>Rho</h1>
+        <p>Reactivation overview for product &amp; leadership</p>
+      </div>
+    </div>
+    <div class="actions">
+      <div class="seg" id="rangeSeg" role="group" aria-label="Date range">
+        <button type="button" data-days="1">Today</button>
+        <button type="button" data-days="7" class="active">7 days</button>
+        <button type="button" data-days="14">14 days</button>
+      </div>
+      <button type="button" class="ghost" id="themeBtn">Theme</button>
+      <button type="button" class="primary" id="refreshBtn">Refresh</button>
+    </div>
+  </header>
+
+  <section class="hero" id="hero"></section>
+
+  <section class="layout">
+    <div class="card">
+      <h2>Conversion flow</h2>
+      <p class="sub">How stalled users moved from outreach to a completed next step.</p>
+      <div class="flow" id="flow"></div>
+    </div>
+
+    <div class="card">
+      <h2>Cost &amp; ROI</h2>
+      <p class="sub">Spend is shown in ₹ using the configured USD→INR rate assumption.</p>
+      <div class="cost-grid" id="costGrid"></div>
+      <div style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;font-size:.82rem">
+          <span class="muted">Budget used today</span>
+          <strong id="budgetLabel">—</strong>
+        </div>
+        <div class="progress"><i id="budgetBar" style="width:0%"></i></div>
+      </div>
+    </div>
+
+    <div class="card span-2">
+      <h2>Where users get stuck</h2>
+      <p class="sub">By onboarding stage — the highlighted row needs the most attention.</p>
+      <div style="overflow-x:auto">
+        <table class="stages">
+          <thead>
+            <tr>
+              <th>Stage</th><th>Stalled</th><th>Called</th><th>Converted</th><th>Conversion</th><th>Cost</th>
+            </tr>
+          </thead>
+          <tbody id="stageBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Why users didn’t convert</h2>
+      <p class="sub">From conversations where the user picked up but didn’t progress.</p>
+      <div id="reasons"></div>
+      <div class="pill-row" id="outcomes"></div>
+    </div>
+
+    <div class="card">
+      <h2>Calls we chose not to make</h2>
+      <p class="sub">Rho skipped these to protect budget, consent, and user experience.</p>
+      <div class="drop-list" id="drops"></div>
+    </div>
+  </section>
+
+  <details class="advanced" id="advanced">
+    <summary>How Rho decides <span class="muted" style="font-weight:500;margin-left:8px">Advanced — threshold, decision log, learning</span></summary>
+    <div class="adv-body">
+      <h3 style="margin:14px 0 4px;font-size:.95rem">Confidence threshold</h3>
+      <p class="sub" style="margin-bottom:0">What-if on current open stalls: how many calls, projected cost, and expected reactivations.</p>
+      <div class="slider-row">
+        <label for="threshold">Threshold <strong id="thVal">0.35</strong></label>
+        <input id="threshold" type="range" min="0" max="1" step="0.01" value="0.35" />
+        <label for="adminKey" class="muted" style="font-size:.78rem">Admin key</label>
+        <input id="adminKey" type="password" placeholder="X-Admin-Key" autocomplete="off"
+               style="border:1px solid var(--border);border-radius:999px;padding:8px 12px;font:inherit;background:var(--bg-elev);color:var(--text);min-width:140px" />
+        <button type="button" class="primary" id="saveTh">Save threshold</button>
+      </div>
+      <div class="sim-stats">
+        <div class="sim-stat"><span class="muted">Calls</span><b id="simCalls">—</b></div>
+        <div class="sim-stat"><span class="muted">Projected cost</span><b id="simCost">—</b></div>
+        <div class="sim-stat"><span class="muted">Expected reactivations</span><b id="simRe">—</b></div>
+      </div>
+
+      <h3 style="margin:18px 0 4px;font-size:.95rem">Learning vs call-everyone</h3>
+      <p class="sub">Cumulative reward over time — Rho versus calling every eligible stall.</p>
+      <div class="chart-box"><canvas id="learnChart"></canvas></div>
+
+      <h3 style="margin:18px 0 4px;font-size:.95rem">Decision log</h3>
+      <p class="sub">Why we called / why we did not.</p>
+      <div style="overflow-x:auto">
+        <table class="log">
+          <thead><tr><th>When</th><th>User</th><th>Action</th><th>Score</th><th>Reason</th></tr></thead>
+          <tbody id="decBody"></tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <button type="button" class="ghost" id="prevPage">Newer</button>
+        <span class="muted" id="pageInfo">—</span>
+        <button type="button" class="ghost" id="nextPage">Older</button>
+      </div>
+    </div>
+  </details>
+
+  <footer class="note">Rho · Spend uses INR_PER_USD (assumption) · Conversion = next-step or deposit within 48 hours after a call</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const fmtN = (n) => n == null || Number.isNaN(n) ? "—" : Number(n).toLocaleString("en-IN");
+  const fmtINR = (n) => n == null || Number.isNaN(n) ? "—" : "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+  const fmtPct = (n) => n == null || Number.isNaN(n) ? "—" : Number(n).toFixed(1) + "%";
+  const fmtDelta = (n, suffix) => {
+    if (n == null || Number.isNaN(n)) return "";
+    const sign = n > 0 ? "+" : "";
+    const cls = n > 0 ? "up" : n < 0 ? "down" : "";
+    return `<span class="delta ${cls}">${sign}${fmtN(n)}${suffix || ""}</span>`;
+  };
+  const fmtDeltaINR = (n) => {
+    if (n == null || Number.isNaN(n)) return "";
+    const sign = n > 0 ? "+" : n < 0 ? "−" : "";
+    const cls = n > 0 ? "up" : n < 0 ? "down" : "";
+    return `<span class="delta ${cls}">${sign}₹${fmtN(Math.abs(n))}</span>`;
+  };
+
+  // --- Rho v2 config (minimal Batch 3 edits) ---
+  // Default API; override with ?api= and persist in localStorage.
+  const DEFAULT_API_BASE = "https://rho-backend.onrender.com";
+  (function initApiBase() {
+    try {
+      const q = new URLSearchParams(location.search).get("api");
+      if (q) localStorage.setItem("rho_api_base", String(q).replace(/\/$/, ""));
+    } catch (e) {}
+  })();
+  let API_BASE = (function () {
+    try {
+      return (localStorage.getItem("rho_api_base") || DEFAULT_API_BASE).replace(/\/$/, "");
+    } catch (e) {
+      return DEFAULT_API_BASE;
+    }
+  })();
+  function apiUrl(path) {
+    if (!path.startsWith("/")) path = "/" + path;
+    return API_BASE + path;
+  }
+  function rangeKey() {
+    if (days === 1) return "today";
+    if (days === 14) return "14";
+    return "7";
+  }
+  function adminKey() {
+    try { return localStorage.getItem("rho_admin_key") || ""; } catch (e) { return ""; }
+  }
+  function setAdminKey(v) {
+    try { localStorage.setItem("rho_admin_key", v || ""); } catch (e) {}
+  }
+
+  let days = 7;
+  let offset = 0;
+  const LIMIT = 12;
+  let learnChart = null;
+
+  function toast(msg) {
+    const el = $("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 2200);
+  }
+
+  function themeInit() {
+    const saved = localStorage.getItem("rho-theme");
+    const preferDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const theme = saved || (preferDark ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+    $("themeBtn").textContent = theme === "dark" ? "Light" : "Dark";
+  }
+  $("themeBtn").onclick = () => {
+    const cur = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+    const next = cur === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    localStorage.setItem("rho-theme", next);
+    $("themeBtn").textContent = next === "dark" ? "Light" : "Dark";
+    if (window.__learn) renderLearn(window.__learn);
+  };
+
+  document.querySelectorAll("#rangeSeg button").forEach((btn) => {
+    btn.onclick = () => {
+      document.querySelectorAll("#rangeSeg button").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      days = Number(btn.dataset.days);
+      refresh().catch((e) => toast(String(e)));
+    };
+  });
+
+  async function getJSON(path) {
+    const res = await fetch(apiUrl(path));
+    if (!res.ok) throw new Error(path + " " + res.status);
+    return res.json();
+  }
+  async function postJSON(path, body) {
+    const res = await fetch(apiUrl(path), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(path + " " + res.status);
+    return res.json();
+  }
+  async function putJSON(path, body) {
+    const headers = { "Content-Type": "application/json" };
+    const key = adminKey();
+    if (key) headers["X-Admin-Key"] = key;
+    const res = await fetch(apiUrl(path), {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(path + " " + res.status);
+    return res.json();
+  }
+
+  function renderHero(h) {
+    const liftText = h.lift_pp == null
+      ? "Lift vs no-call group unavailable"
+      : `<span class="delta ${h.lift_pp >= 0 ? "up" : "down"}">${h.lift_pp >= 0 ? "+" : ""}${h.lift_pp} pp vs no-call group</span>`;
+    $("hero").innerHTML = `
+      <div class="kpi accent">
+        <div class="label">Users stalled</div>
+        <div class="value">${fmtN(h.users_stalled)}</div>
+        <div class="sub">${fmtDelta(h.users_stalled_delta, " vs prior")} · ${fmtN(h.users_stalled_period)} new in range</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Calls made</div>
+        <div class="value">${fmtN(h.calls_made)}</div>
+        <div class="sub">${fmtPct(h.calls_pct_of_stalled)} of stalled · ${fmtN(h.chose_not_to_call)} we chose not to make ${fmtDelta(h.calls_made_delta, "")}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Converted after call</div>
+        <div class="value">${fmtN(h.converted)}</div>
+        <div class="sub">${fmtPct(h.conversion_rate_pct)} conversion · ${fmtDelta(h.converted_delta, "")}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Lift vs no-call</div>
+        <div class="value">${h.lift_pp == null ? "—" : (h.lift_pp >= 0 ? "+" : "") + h.lift_pp + " pp"}</div>
+        <div class="sub">${liftText}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Total spend</div>
+        <div class="value">${fmtINR(h.spend_inr)}</div>
+        <div class="sub">${fmtDeltaINR(h.spend_delta_inr)} vs prior period</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Cost per converted</div>
+        <div class="value">${fmtINR(h.cost_per_converted_inr)}</div>
+        <div class="sub">All-in call cost ÷ conversions</div>
+      </div>`;
+  }
+
+  function barSeg(cls, value, total, label) {
+    const pct = total ? Math.max(0, (100 * value) / total) : 0;
+    if (value <= 0) return "";
+    const show = pct >= 8 ? label : "";
+    return `<div class="flow-seg ${cls}" style="width:${pct}%" title="${label}">${show}</div>`;
+  }
+
+  function renderFlow(f) {
+    const pickTotal = f.called || 1;
+    const endTotal = Math.max(1, f.converted + f.not_converted);
+    const maxBranch = Math.max(f.called, f.messaged, f.skipped, 1);
+    const row = (label, cls, n, base, caption) => `
+      <div class="flow-row">
+        <div class="flow-label">${label}</div>
+        <div class="flow-bar-wrap">
+          <div class="flow-seg ${cls}" style="width:${Math.max(6, (100 * n) / base)}%">${caption || ""}</div>
+        </div>
+        <div class="flow-num">${fmtN(n)}</div>
+      </div>`;
+    $("flow").innerHTML = `
+      ${row("Stalled", "call", f.stalled, f.stalled || 1, "In this period")}
+      ${row("Called", "call", f.called, maxBranch, fmtPct(f.pct_called) + " of decisions")}
+      ${row("Messaged", "msg", f.messaged, maxBranch, "")}
+      ${row("Skipped", "skip", f.skipped, maxBranch, "")}
+      <div class="flow-row">
+        <div class="flow-label">Picked up</div>
+        <div class="flow-bar-wrap">
+          ${barSeg("pick", f.picked_up, pickTotal, "Yes " + fmtN(f.picked_up))}
+          ${barSeg("nopick", f.not_picked_up, pickTotal, "No " + fmtN(f.not_picked_up))}
+        </div>
+        <div class="flow-num">${fmtPct(f.pct_picked_up)}</div>
+      </div>
+      <div class="flow-row">
+        <div class="flow-label">After pickup</div>
+        <div class="flow-bar-wrap">
+          ${barSeg("win", f.converted, endTotal, "Converted " + fmtN(f.converted))}
+          ${barSeg("lose", f.not_converted, endTotal, "Not " + fmtN(f.not_converted))}
+        </div>
+        <div class="flow-num">${fmtPct(f.pct_converted)}</div>
+      </div>
+      <p class="flow-note">Converted means the user completed a later onboarding step or deposit within 48 hours of the call.</p>`;
+  }
+
+  function renderStages(rows, worst) {
+    const maxStalled = Math.max(1, ...rows.map((r) => r.stalled));
+    $("stageBody").innerHTML = rows.map((r) => `
+      <tr class="${r.stage === worst ? "worst" : ""}">
+        <td>${r.label}${r.stage === worst ? ' <span class="badge">Needs attention</span>' : ""}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span>${fmtN(r.stalled)}</span>
+            <div class="mini-bar"><i style="width:${(100 * r.stalled) / maxStalled}%"></i></div>
+          </div>
+        </td>
+        <td>${fmtN(r.called)}</td>
+        <td>${fmtN(r.converted)}</td>
+        <td>${fmtPct(r.conversion_pct)}</td>
+        <td>${fmtINR(r.cost_inr)}</td>
+      </tr>`).join("");
+  }
+
+  function renderReasons(reasons, outcomes) {
+    if (!reasons.length) {
+      $("reasons").innerHTML = `<p class="muted">No non-conversion reasons in this range yet.</p>`;
+    } else {
+      $("reasons").innerHTML = reasons.map((r) => `
+        <div class="reason-row">
+          <div class="reason-top"><span>${r.label}</span><span>${fmtN(r.count)} · ${fmtPct(r.pct)}</span></div>
+          <div class="reason-bar"><i style="width:${Math.max(4, r.pct)}%"></i></div>
+          <p class="insight">${r.insight}</p>
+        </div>`).join("");
+    }
+    $("outcomes").innerHTML = (outcomes || []).map((o) =>
+      `<span class="pill">${o.label}: ${fmtN(o.count)} (${fmtPct(o.pct)})</span>`
+    ).join("") || "";
+  }
+
+  function renderDrops(drops) {
+    if (!drops.length) {
+      $("drops").innerHTML = `<p class="muted">No skipped calls in this range.</p>`;
+      return;
+    }
+    $("drops").innerHTML = drops.map((d) => `
+      <div class="drop-item">
+        <div>${d.label}</div>
+        <strong>${fmtN(d.count)}</strong>
+        <div class="pct">${fmtPct(d.pct)}</div>
+      </div>`).join("");
+  }
+
+  function renderCost(c) {
+    $("costGrid").innerHTML = `
+      <div class="cost-stat"><div class="k">Spend in range</div><div class="v">${fmtINR(c.spend_inr)}</div></div>
+      <div class="cost-stat"><div class="k">Cost per call</div><div class="v">${fmtINR(c.cost_per_call_inr)}</div></div>
+      <div class="cost-stat"><div class="k">Cost per conversion</div><div class="v">${fmtINR(c.cost_per_converted_inr)}</div></div>
+      <div class="cost-stat"><div class="k">Projected monthly</div><div class="v">${fmtINR(c.projected_monthly_inr)}</div></div>`;
+    $("budgetLabel").textContent = `${fmtINR(c.spend_today_inr)} / ${fmtINR(c.budget_today_inr)} (${fmtPct(c.budget_used_pct)})`;
+    $("budgetBar").style.width = Math.min(100, c.budget_used_pct || 0) + "%";
+    // Assumptions note (conversion ₹ / opt-out ₹) — values from policy, labelled as assumptions.
+    const note = c.assumptions_note
+      || `Assumptions: conversion_value_inr=₹${c.conversion_value_inr_assumption ?? 500}, optout_penalty_inr=₹${c.optout_penalty_inr_assumption ?? 200}, INR_PER_USD=${c.inr_per_usd ?? 88}`;
+    let el = document.getElementById("assumptionsNote");
+    if (!el) {
+      el = document.createElement("p");
+      el.id = "assumptionsNote";
+      el.className = "sub";
+      el.style.marginTop = "10px";
+      $("costGrid").parentElement.appendChild(el);
+    }
+    el.textContent = note;
+  }
+
+  function chartColors() {
+    const dark = document.documentElement.getAttribute("data-theme") === "dark";
+    return {
+      text: dark ? "#cbd5e1" : "#475569",
+      grid: dark ? "rgba(148,163,184,.12)" : "rgba(100,116,139,.15)",
+      teal: "#14b8a6",
+      rose: "#fb7185",
+    };
+  }
+
+  function renderLearn(learn) {
+    window.__learn = learn;
+    const c = chartColors();
+    const series = learn.series || [];
+    if (learnChart) learnChart.destroy();
+    learnChart = new Chart($("learnChart"), {
+      type: "line",
+      data: {
+        labels: series.map((s) => (s.day || "").slice(5)),
+        datasets: [
+          {
+            label: "Rho",
+            data: series.map((s) => s.rho_cumulative),
+            borderColor: c.teal,
+            tension: 0.25,
+            pointRadius: 0,
+            borderWidth: 2.5,
+          },
+          {
+            label: "Call everyone",
+            data: series.map((s) => s.baseline_cumulative),
+            borderColor: c.rose,
+            tension: 0.25,
+            pointRadius: 0,
+            borderWidth: 2,
+            borderDash: [5, 4],
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: c.text, boxWidth: 12 } } },
+        scales: {
+          x: { ticks: { color: c.text }, grid: { color: c.grid } },
+          y: { ticks: { color: c.text }, grid: { color: c.grid } },
+        },
+      },
+    });
+  }
+
+  function renderDecisions(data) {
+    $("decBody").innerHTML = (data.decisions || []).map((d) => {
+      const when = (d.created_at || "").replace("T", " ").slice(0, 19);
+      const cls = d.action === "call_now" ? "call" : d.action === "message" ? "message" : "none";
+      return `<tr>
+        <td class="muted">${when}</td>
+        <td>${d.user_id || ""}</td>
+        <td><span class="tag ${cls}">${d.action}</span></td>
+        <td>${d.score == null ? "—" : Number(d.score).toFixed(3)}</td>
+        <td>${d.reason || ""}</td>
+      </tr>`;
+    }).join("");
+    $("pageInfo").textContent = `${offset + 1}–${offset + (data.decisions || []).length} of ${data.total}`;
+  }
+
+  async function loadDecisions() {
+    const data = await getJSON(`/dashboard/decisions?limit=${LIMIT}&offset=${offset}`);
+    renderDecisions(data);
+  }
+
+  let simTimer = null;
+  async function runSimulate(th) {
+    $("thVal").textContent = Number(th).toFixed(2);
+    const sim = await postJSON("/dashboard/simulate", { threshold: Number(th) });
+    $("simCalls").textContent = fmtN(sim.calls);
+    $("simCost").textContent = fmtINR(sim.projected_cost_inr);
+    $("simRe").textContent = sim.expected_reactivations == null ? "—" : Number(sim.expected_reactivations).toFixed(1);
+  }
+
+  $("threshold").oninput = (e) => {
+    clearTimeout(simTimer);
+    simTimer = setTimeout(() => runSimulate(e.target.value).catch(console.error), 180);
+  };
+  $("saveTh").onclick = async () => {
+    const keyEl = $("adminKey");
+    if (keyEl) setAdminKey(keyEl.value.trim());
+    await putJSON("/dashboard/threshold", { threshold: Number($("threshold").value) });
+    toast("Threshold saved");
+  };
+  $("prevPage").onclick = async () => { offset = Math.max(0, offset - LIMIT); await loadDecisions(); };
+  $("nextPage").onclick = async () => { offset += LIMIT; await loadDecisions(); };
+
+  async function refresh() {
+    const [overview, learning, policy] = await Promise.all([
+      getJSON(`/dashboard/overview?range=${rangeKey()}`),
+      getJSON(`/dashboard/learning?range=${rangeKey()}`),
+      getJSON("/dashboard/threshold"),
+    ]);
+    renderHero(overview.hero);
+    renderFlow(overview.flow);
+    renderStages(overview.stages, overview.worst_stage);
+    renderReasons(overview.reasons, overview.outcomes);
+    renderDrops(overview.drops);
+    renderCost(overview.cost);
+    renderLearn(learning);
+    const th = Number(policy.threshold || overview.threshold || 0.35);
+    $("threshold").value = th;
+    await runSimulate(th);
+    offset = 0;
+    await loadDecisions();
+  }
+
+  $("refreshBtn").onclick = () => refresh().then(() => toast("Updated")).catch((e) => toast(String(e)));
+  themeInit();
+  try {
+    const ak = $("adminKey");
+    if (ak) ak.value = adminKey();
+  } catch (e) {}
+  refresh().catch((e) => toast(String(e)));
+})();
+</script>
+</body>
+</html>

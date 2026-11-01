@@ -1,4 +1,4 @@
-"""Rho v2 FastAPI app — Batch 2: decisions, Bolna dial, webhooks, rewards."""
+"""Rho v2 FastAPI app — Batch 3: dashboard, traffic, PWA contract."""
 
 from __future__ import annotations
 
@@ -11,6 +11,12 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, s
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 
+from pathlib import Path
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+from app import dashboard as dashboard_svc
 from app.admin_routes import router as admin_router
 from app.auth import require_admin
 from app.config import get_settings
@@ -80,7 +86,7 @@ async def lifespan(app: FastAPI):
     await close_pool()
 
 
-app = FastAPI(title="Rho v2", version="0.2.1", lifespan=lifespan)
+app = FastAPI(title="Rho v2", version="0.3.0", lifespan=lifespan)
 
 _settings_boot = None
 try:
@@ -266,6 +272,83 @@ async def dev_trigger(user_id: str, _: None = Depends(require_admin)):
     if not settings.dev:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "not found")
     return await force_evaluate_user(user_id)
+
+
+
+@app.get("/dashboard/overview")
+async def dashboard_overview(
+    range: Optional[str] = Query(default=None, alias="range"),
+    days: Optional[int] = Query(default=None),
+):
+    """Public aggregated overview. range=today|7|14 (legacy days= also accepted)."""
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        return await dashboard_svc.overview(conn, range_q=range, days=days)
+
+
+@app.get("/dashboard/learning")
+async def dashboard_learning(range: Optional[str] = Query(default=None, alias="range")):
+    """Public learning series: Rho vs call-everyone cumulative reward."""
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        return await dashboard_svc.learning(conn, range_q=range)
+
+
+@app.get("/dashboard/decisions")
+async def dashboard_decisions(
+    limit: int = Query(default=12, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+):
+    """Paged decision log with masked user ids."""
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        return await dashboard_svc.list_decisions(conn, limit=limit, offset=offset)
+
+
+@app.post("/dashboard/simulate")
+async def dashboard_simulate(request: Request):
+    """What-if projection at a given threshold (public-safe aggregates)."""
+    try:
+        data = await request.json()
+    except Exception as e:
+        raise HTTPException(400, "invalid json") from e
+    th = float((data or {}).get("threshold", 0.35))
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        return await dashboard_svc.simulate_threshold(conn, th)
+
+
+@app.get("/dashboard/threshold")
+async def dashboard_get_threshold():
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        return await dashboard_svc.get_threshold(conn)
+
+
+@app.put("/dashboard/threshold")
+async def dashboard_put_threshold(request: Request, _: str = Depends(require_admin)):
+    """Save min_score for all policies. Requires X-Admin-Key."""
+    try:
+        data = await request.json()
+    except Exception as e:
+        raise HTTPException(400, "invalid json") from e
+    th = float((data or {}).get("threshold", (data or {}).get("min_score", 0.35)))
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        async with conn.transaction():
+            return await dashboard_svc.put_threshold(conn, th)
+
+
+_DASHBOARD_DIR = Path(__file__).resolve().parent.parent / "dashboard"
+
+
+@app.get("/dashboard")
+@app.get("/dashboard/")
+async def dashboard_page():
+    index = _DASHBOARD_DIR / "index.html"
+    if not index.exists():
+        raise HTTPException(404, "dashboard not found")
+    return FileResponse(index)
 
 
 # Explicit OPTIONS for sendBeacon / preflight friendliness (CORSMiddleware also handles this).

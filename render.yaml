@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: rho-backend
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: DRY_RUN
+        value: "1"
+      - key: DEV
+        value: "0"
+      - key: WORKER_ENABLED
+        value: "0"
+      - key: INR_PER_USD
+        value: "88"
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_API_KEY
+        sync: false
+      - key: TICK_SECRET
+        sync: false
+      - key: TEAM_PHONES
+        sync: false
+      - key: BOLNA_API_KEY
+        sync: false
+      - key: BOLNA_AGENT_ID_REACTIVATION
+        sync: false
+      - key: BOLNA_AGENT_ID_REFERRAL
+        sync: false
+      - key: BOLNA_WEBHOOK_SECRET
+        sync: false
