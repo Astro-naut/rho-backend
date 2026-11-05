@@ -21,6 +21,8 @@ async def get_pool() -> AsyncConnectionPool:
             min_size=1,
             max_size=10,
             kwargs={"row_factory": dict_row, "autocommit": False},
+            check=AsyncConnectionPool.check_connection,
+            max_idle=120,
             open=False,
         )
         await _pool.open()
